@@ -494,4 +494,4 @@ class PyTestRailPlugin(object):
         if error:
             print('[{}] Failed to get tests: "{}"'.format(TESTRAIL_PREFIX, error))
             return None
-        return response
+        return response['tests']
