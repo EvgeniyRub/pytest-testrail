@@ -75,3 +75,7 @@ Pipfile.lock
 .spyderproject
 .ropeproject
 .vscode/
+
+# Pycharm
+.idea/
+
