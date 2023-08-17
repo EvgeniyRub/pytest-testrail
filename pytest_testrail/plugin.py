@@ -12,13 +12,18 @@ TESTRAIL_TEST_STATUS = {
     "blocked": 2,
     "untested": 3,
     "retest": 4,
-    "failed": 5
+    "failed": 5,
+    "xfail": 6,
+    "xpass": 7,
 }
+
 
 PYTEST_TO_TESTRAIL_STATUS = {
     "passed": TESTRAIL_TEST_STATUS["passed"],
     "failed": TESTRAIL_TEST_STATUS["failed"],
     "skipped": TESTRAIL_TEST_STATUS["blocked"],
+    "xpass": TESTRAIL_TEST_STATUS["xpass"],
+    "xfail": TESTRAIL_TEST_STATUS["xfail"],
 }
 
 DT_FORMAT = '%d-%m-%Y %H:%M:%S'
@@ -33,7 +38,7 @@ GET_TESTRUN_URL = 'get_run/{}'
 GET_TESTPLAN_URL = 'get_plan/{}'
 GET_TESTS_URL = 'get_tests/{}'
 
-COMMENT_SIZE_LIMIT = 4000
+COMMENT_SIZE_LIMIT = 7000
 
 
 class DeprecatedTestDecorator(DeprecationWarning):
@@ -222,11 +227,18 @@ class PyTestRailPlugin(object):
             defectids = item.get_closest_marker(TESTRAIL_DEFECTS_PREFIX).kwargs.get('defect_ids')
         if item.get_closest_marker(TESTRAIL_PREFIX):
             testcaseids = item.get_closest_marker(TESTRAIL_PREFIX).kwargs.get('ids')
+            reported_result = outcome.get_result().outcome
+            test_marker_names = [mark.name for mark in item.own_markers if mark.name in ('xfail', 'xpass')]
+            if test_marker_names:
+                if reported_result == 'skipped' and test_marker_names[0] == 'xfail':
+                    reported_result = test_marker_names[0]
+                elif reported_result == 'passed' and test_marker_names[0] == 'xfail':
+                    reported_result = 'xpass'
             if rep.when == 'call' and testcaseids:
                 if defectids:
                     self.add_result(
                         clean_test_ids(testcaseids),
-                        get_test_outcome(outcome.get_result().outcome),
+                        get_test_outcome(reported_result),
                         comment=comment,
                         duration=rep.duration,
                         defects=str(clean_test_defects(defectids)).replace('[', '').replace(']', '').replace("'", ''),
@@ -235,7 +247,7 @@ class PyTestRailPlugin(object):
                 else:
                     self.add_result(
                         clean_test_ids(testcaseids),
-                        get_test_outcome(outcome.get_result().outcome),
+                        get_test_outcome(reported_result),
                         comment=comment,
                         duration=rep.duration,
                         test_parametrize=test_parametrize
@@ -331,22 +343,29 @@ class PyTestRailPlugin(object):
                 entry['version'] = self.version
             comment = result.get('comment', '')
             test_parametrize = result.get('test_parametrize', '')
-            entry['comment'] = u''
+            entry['comment'] = ''
             if test_parametrize:
-                entry['comment'] += u"# Test parametrize: #\n"
-                entry['comment'] += str(test_parametrize) + u'\n\n'
+                entry['comment'] += " Test parametrize: \n"
+                entry['comment'] += str(test_parametrize) + '\n\n'
             if comment:
+                comment_encode = converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:]
+                # Split the comment by newline characters
+                comment_lines = comment_encode.split('\n')
+                # Remove lines containing only spaces or tabs
+                comment_filtered = [line for line in comment_lines if line.strip()]
+                # Join the filtered lines with a single newline character
+                modified_string = '\n'.join(comment_filtered)
                 if self.custom_comment:
                     entry['comment'] += self.custom_comment + '\n'
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
-                    entry['comment'] += u"# Pytest result: #\n"
-                    entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
-                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ') # noqa
+                    entry['comment'] += u" Pytest result: \n"
+                    entry['comment'] += u'Log truncated\n...' if len(str(comment)) > COMMENT_SIZE_LIMIT else ''
+                    entry['comment'] += u"    " + modified_string
                 else:
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
-                    entry['comment'] += u"# Pytest result: #\n"
-                    entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
-                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ') # noqa
+                    entry['comment'] += u" Pytest result: \n"
+                    entry['comment'] += u'Log truncated\n...' if len(str(comment)) > COMMENT_SIZE_LIMIT else ''
+                    entry['comment'] += u"    " + modified_string
             elif comment == '':
                 entry['comment'] = self.custom_comment
             duration = result.get('duration')

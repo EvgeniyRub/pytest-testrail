@@ -10,7 +10,7 @@
 #
 # Copyright Gurock Software GmbH. See license.md for details.
 #
-
+import json as j
 import sys
 import requests
 import time
@@ -109,11 +109,12 @@ class APIClient:
         cert_check = kwargs.get('cert_check', self.cert_check)
         headers = kwargs.get('headers', self.headers)
         url = self._url + uri
+        payload = bytes(j.dumps(data), 'utf-8')
         r = requests.post(
             url,
             auth=(self.user, self.password),
             headers=headers,
-            json=data,
+            data=payload,
             verify=cert_check,
             timeout=self.timeout
         )
@@ -122,7 +123,7 @@ class APIClient:
             pause = int(r.headers.get('Retry-After', 60))
             print("Too many requests: pause for {}s".format(pause))
             time.sleep(pause)
-            return self.send_post(uri, data, **kwargs)
+            return self.send_post(uri, payload, **kwargs)
         else:
             return r.json()
 
