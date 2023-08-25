@@ -116,3 +116,22 @@ Once the all tests are finished they will be updated in TestRail:
 | --tr-sort-by-status-id         | Test results are sorted by status_id, so that worst test result of parametrized test becomes final test status in TestRail                |
 
  * Added ability to extract test case IDs from testrun.
+
+
+### What was changed/added so far with 2.11.0:
+
+* Added **XFAIL** and **XPASS** testrail tests results. 
+Pytest test outcome is always one of “passed”, “failed”, “skipped”
+[pytest.CollectReport.outcome](https://docs.pytest.org/en/7.1.x/reference/reference.html?highlight=outcome#pytest.CollectReport.outcome)<br>
+Tests with mark **'xfail'**(@pytest.mark.xfail) have such test results:<br>
+-- In case test outcome is `skipped` - in testrail we get test results `xfail`. <br>
+-- In case test outcome is `passed` - in testrail we get test results `xpass`. <br>
+
+* Changed format of data to send with the request.
+* Changed COMMENT_SIZE_LIMIT from 4000 to 7000.
+* Removed duplicate newline characters in test result comments for a better visual of the Testrail result.
+
+### What was changed/added so far with 2.12.0:
+
+* from 2.11.0 ~~* Removed duplicate newline characters in test result comments for a better visual of the Testrail result.~~
+*  Replaced special characters('>','<', "'", '"' ) in test results comment with Unicode.

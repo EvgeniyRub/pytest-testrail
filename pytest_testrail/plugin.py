@@ -343,29 +343,30 @@ class PyTestRailPlugin(object):
                 entry['version'] = self.version
             comment = result.get('comment', '')
             test_parametrize = result.get('test_parametrize', '')
-            entry['comment'] = ''
+            entry['comment'] = u''
             if test_parametrize:
-                entry['comment'] += " Test parametrize: \n"
-                entry['comment'] += str(test_parametrize) + '\n\n'
+                entry['comment'] += u"# Test parametrize: #\n"
+                entry['comment'] += str(test_parametrize) + u'\n\n'
             if comment:
-                comment_encode = converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:]
-                # Split the comment by newline characters
-                comment_lines = comment_encode.split('\n')
-                # Remove lines containing only spaces or tabs
-                comment_filtered = [line for line in comment_lines if line.strip()]
-                # Join the filtered lines with a single newline character
-                modified_string = '\n'.join(comment_filtered)
                 if self.custom_comment:
                     entry['comment'] += self.custom_comment + '\n'
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
-                    entry['comment'] += u" Pytest result: \n"
-                    entry['comment'] += u'Log truncated\n...' if len(str(comment)) > COMMENT_SIZE_LIMIT else ''
-                    entry['comment'] += u"    " + modified_string
+                    entry['comment'] += u"# Pytest result: #\n"
+                    entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
+                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ')  # noqa
                 else:
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
-                    entry['comment'] += u" Pytest result: \n"
-                    entry['comment'] += u'Log truncated\n...' if len(str(comment)) > COMMENT_SIZE_LIMIT else ''
-                    entry['comment'] += u"    " + modified_string
+                    entry['comment'] += u"# Pytest result: #\n"
+                    entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
+                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ')  # noqa
+                    # Replace symbols
+                    entry['comment'] = (entry['comment']
+                                        .replace('>', '\u02C3')
+                                        .replace('<', '\u02C2')
+                                        .replace("'", '\u02B9')
+                                        .replace('"', '\u02BA')
+                                        )
+
             elif comment == '':
                 entry['comment'] = self.custom_comment
             duration = result.get('duration')
