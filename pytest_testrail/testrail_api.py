@@ -10,7 +10,6 @@
 #
 # Copyright Gurock Software GmbH. See license.md for details.
 #
-import json
 import json as j
 import sys
 import requests
@@ -94,10 +93,10 @@ class APIClient:
             try:
                 response_json = r.json()
                 return response_json
-            except json.JSONDecodeError as e:
+            except j.JSONDecodeError as e:
                 print(f"[{TESTRAIL_PREFIX}][GET] JSON decoding error:", e)
                 print(f"[{TESTRAIL_PREFIX}][GET] Received non-JSON response:", r.content)
-                return str(r.content)
+                return r.text
 
     def send_post(self, uri, data, **kwargs):
         '''
@@ -143,10 +142,10 @@ class APIClient:
             try:
                 response_json = r.json()
                 return response_json
-            except json.JSONDecodeError as e:
+            except j.JSONDecodeError as e:
                 print(f"[{TESTRAIL_PREFIX}][POST] JSON decoding error:", e)
                 print(f"[{TESTRAIL_PREFIX}][POST] Received non-JSON response:", r.content)
-                return str(r.content)
+                return r.text
 
     @staticmethod
     def get_error(response):
@@ -156,10 +155,5 @@ class APIClient:
             :param response: response of request
             :return: String of the error
         """
-        try:
-            json.loads(response)
-            if 'error' in response and response['error']:
-                return response['error']
-        except ValueError:
-            if 'error' in response:
-                return response
+        if isinstance(response, (list, dict)) and 'error' in response and response['error']:
+            return response['error']
