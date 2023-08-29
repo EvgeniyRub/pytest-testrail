@@ -10,10 +10,13 @@
 #
 # Copyright Gurock Software GmbH. See license.md for details.
 #
+import json
 import json as j
 import sys
 import requests
 import time
+
+from pytest_testrail.plugin import TESTRAIL_PREFIX
 
 if sys.version_info.major == 2:
     from urlparse import urljoin
@@ -71,6 +74,7 @@ class APIClient:
         cert_check = kwargs.get('cert_check', self.cert_check)
         headers = kwargs.get('headers', self.headers)
         url = self._url + uri
+        print(f"[{TESTRAIL_PREFIX}][GET] Sending GET request to {url}")
         r = requests.get(
             url,
             auth=(self.user, self.password),
@@ -78,6 +82,8 @@ class APIClient:
             verify=cert_check,
             timeout=self.timeout
         )
+        print(f"[{TESTRAIL_PREFIX}][GET] Response status code: {r.status_code}")
+        print(f"[{TESTRAIL_PREFIX}][GET] Content: {r.content}")
 
         if r.status_code == 429:  # Too many requests
             pause = int(r.headers.get('Retry-After', 60))
@@ -85,7 +91,13 @@ class APIClient:
             time.sleep(pause)
             return self.send_get(uri, **kwargs)
         else:
-            return r.json()
+            try:
+                response_json = r.json()
+                return response_json
+            except json.JSONDecodeError as e:
+                print(f"[{TESTRAIL_PREFIX}][GET] JSON decoding error:", e)
+                print(f"[{TESTRAIL_PREFIX}][GET] Received non-JSON response:", r.content)
+                return str(r.content)
 
     def send_post(self, uri, data, **kwargs):
         '''
@@ -110,6 +122,8 @@ class APIClient:
         headers = kwargs.get('headers', self.headers)
         url = self._url + uri
         payload = bytes(j.dumps(data), 'utf-8')
+        print(f"[{TESTRAIL_PREFIX}][POST] Sending POST request to {url}")
+        print(f"[{TESTRAIL_PREFIX}][POST] Data: {payload}")
         r = requests.post(
             url,
             auth=(self.user, self.password),
@@ -118,22 +132,34 @@ class APIClient:
             verify=cert_check,
             timeout=self.timeout
         )
-
+        print(f"[{TESTRAIL_PREFIX}][POST] Response status code: {r.status_code}")
+        print(f"[{TESTRAIL_PREFIX}][POST] Content: {r.content}")
         if r.status_code == 429:  # Too many requests
             pause = int(r.headers.get('Retry-After', 60))
             print("Too many requests: pause for {}s".format(pause))
             time.sleep(pause)
             return self.send_post(uri, payload, **kwargs)
         else:
-            return r.json()
+            try:
+                response_json = r.json()
+                return response_json
+            except json.JSONDecodeError as e:
+                print(f"[{TESTRAIL_PREFIX}][POST] JSON decoding error:", e)
+                print(f"[{TESTRAIL_PREFIX}][POST] Received non-JSON response:", r.content)
+                return str(r.content)
 
     @staticmethod
-    def get_error(json_response):
+    def get_error(response):
         """ Extract error contained in a API response.
             If no error occured, return None
 
-            :param json_response: json response of request
+            :param response: response of request
             :return: String of the error
         """
-        if 'error' in json_response and json_response['error']:
-            return json_response['error']
+        try:
+            json.loads(response)
+            if 'error' in response and response['error']:
+                return response['error']
+        except ValueError:
+            if 'error' in response:
+                return response
