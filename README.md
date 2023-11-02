@@ -135,3 +135,7 @@ Tests with mark **'xfail'**(@pytest.mark.xfail) have such test results:<br>
 
 * from 2.11.0 ~~* Removed duplicate newline characters in test result comments for a better visual of the Testrail result.~~
 *  Replaced special characters('>','<', "'", '"' ) in test results comment with Unicode.
+
+### What was changed so far with 2.14.0:
+
+*  Added TESTRAIL_TEST_STATUS_PRIORITY see on Testrail result first failed result in parametrized tests.

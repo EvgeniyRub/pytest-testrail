@@ -17,6 +17,7 @@ TESTRAIL_TEST_STATUS = {
     "xpass": 7,
 }
 
+TESTRAIL_TEST_STATUS_PRIORITY = [1, 2, 3, 4, 7, 6, 5]
 
 PYTEST_TO_TESTRAIL_STATUS = {
     "passed": TESTRAIL_TEST_STATUS["passed"],
@@ -317,8 +318,11 @@ class PyTestRailPlugin(object):
         # By default the last test outcome is final test status (helps when rerun-failures is used),
         # for details refer to issue https://github.com/allankp/pytest-testrail/issues/100
         if self.sort_by_status_id:
-            self.results.sort(key=itemgetter('status_id'))
-        self.results.sort(key=itemgetter('case_id'))
+            self.results.sort(
+                key=lambda result: (TESTRAIL_TEST_STATUS_PRIORITY.index(result["status_id"]), result["status_id"]))
+            # self.results.sort(key=itemgetter('status_id'))
+        else:
+            self.results.sort(key=itemgetter('case_id'))
 
         # Manage case of "blocked" testcases
         if self.publish_blocked is False:
