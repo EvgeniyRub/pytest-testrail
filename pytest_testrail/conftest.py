@@ -3,6 +3,7 @@ import os
 import sys
 from .plugin import PyTestRailPlugin
 from .testrail_api import APIClient
+
 if sys.version_info.major == 2:
     # python2
     import ConfigParser as configparser
@@ -128,6 +129,7 @@ def pytest_addoption(parser):
         required=False,
         help='Sort test results by status_id, so the worst test result is final test status in TestRail'
     )
+
 
 def pytest_configure(config):
     if config.getoption('--testrail'):

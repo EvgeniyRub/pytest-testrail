@@ -139,3 +139,14 @@ Tests with mark **'xfail'**(@pytest.mark.xfail) have such test results:<br>
 ### What was changed so far with 2.14.0:
 
 *  Added TESTRAIL_TEST_STATUS_PRIORITY see on Testrail result first failed result in parametrized tests.
+
+### What was changed so far with 2.15.0:
+
+*  Added checks for setup functions(fixtures) result if it is either 'skipped' or 'failed'.
+
+It looks for specific markers associated with the test item: 'skipif' and 'xfail' markers.<br>
+-- If no 'skipif' and 'xfail' markers and setup functions(fixtures) result 'failed', the reported result is set to 'failed'.<br>
+-- If a 'skipif' marker is found and its argument is (True,), the setup functions(fixtures) reported result is set to 'skipped'.<br>
+-- If an 'xfail' marker is found and no 'skipif' marker is present, and the reported result setup functions(fixtures) are 'skipped', the reported result is set to 'failed'.<br>
+
+*  Changed TESTRAIL_TEST_STATUS_PRIORITY to see Skipped results last. 

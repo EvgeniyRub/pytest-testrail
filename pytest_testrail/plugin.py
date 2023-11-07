@@ -17,7 +17,7 @@ TESTRAIL_TEST_STATUS = {
     "xpass": 7,
 }
 
-TESTRAIL_TEST_STATUS_PRIORITY = [1, 2, 3, 4, 7, 6, 5]
+TESTRAIL_TEST_STATUS_PRIORITY = [2, 1, 3, 4, 6, 7, 5]
 
 PYTEST_TO_TESTRAIL_STATUS = {
     "passed": TESTRAIL_TEST_STATUS["passed"],
@@ -229,12 +229,42 @@ class PyTestRailPlugin(object):
         if item.get_closest_marker(TESTRAIL_PREFIX):
             testcaseids = item.get_closest_marker(TESTRAIL_PREFIX).kwargs.get('ids')
             reported_result = outcome.get_result().outcome
-            test_marker_names = [mark.name for mark in item.own_markers if mark.name in ('xfail', 'xpass')]
-            if test_marker_names:
-                if reported_result == 'skipped' and test_marker_names[0] == 'xfail':
-                    reported_result = test_marker_names[0]
-                elif reported_result == 'passed' and test_marker_names[0] == 'xfail':
-                    reported_result = 'xpass'
+            if rep.when == 'call':
+                test_marker_names = [mark.name for mark in item.own_markers if mark.name == 'xfail']
+                if test_marker_names:
+                    if reported_result == 'skipped' and test_marker_names[0] == 'xfail':
+                        reported_result = 'xfail'
+                    elif reported_result == 'passed' and test_marker_names[0] == 'xfail':
+                        reported_result = 'xpass'
+
+            if rep.when == 'setup' and testcaseids and reported_result in ('skipped', 'failed'):
+                test_marker_skipif = [mark for mark in item.own_markers if mark.name == 'skipif']
+                test_marker_xfail = [mark for mark in item.own_markers if mark.name == 'xfail']
+                if test_marker_skipif:
+                    if test_marker_skipif[0].args == (True,):
+                        reported_result = 'skipped'
+                if test_marker_xfail:
+                    if len(test_marker_skipif) == 0 and reported_result == 'skipped':
+                        reported_result = 'failed'
+
+                if defectids:
+                    self.add_result(
+                        clean_test_ids(testcaseids),
+                        get_test_outcome(reported_result),
+                        comment=comment,
+                        duration=rep.duration,
+                        defects=str(clean_test_defects(defectids)).replace('[', '').replace(']', '').replace("'", ''),
+                        test_parametrize=test_parametrize
+                    )
+                else:
+                    self.add_result(
+                        clean_test_ids(testcaseids),
+                        get_test_outcome(reported_result),
+                        comment=comment,
+                        duration=rep.duration,
+                        test_parametrize=test_parametrize
+                    )
+
             if rep.when == 'call' and testcaseids:
                 if defectids:
                     self.add_result(
