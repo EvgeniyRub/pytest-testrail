@@ -150,3 +150,11 @@ It looks for specific markers associated with the test item: 'skipif' and 'xfail
 -- If an 'xfail' marker is found and no 'skipif' marker is present, and the reported result setup functions(fixtures) are 'skipped', the reported result is set to 'failed'.<br>
 
 *  Changed TESTRAIL_TEST_STATUS_PRIORITY to see Skipped results last. 
+
+### What was changed so far with 2.16.0:
+
+*  Added checks for setup functions(fixtures) result if it is either 'skipped' or 'failed' if 'skip' marker is found.
+
+-- If a 'skip' marker is found the setup functions(fixtures) reported result is set to 'skipped'.<br>
+
+* Modified don't publish blocked testcases not only cases from test run, but for all cases.

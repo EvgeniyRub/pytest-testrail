@@ -240,12 +240,15 @@ class PyTestRailPlugin(object):
             if rep.when == 'setup' and testcaseids and reported_result in ('skipped', 'failed'):
                 test_marker_skipif = [mark for mark in item.own_markers if mark.name == 'skipif']
                 test_marker_xfail = [mark for mark in item.own_markers if mark.name == 'xfail']
+                test_marker_skip = [mark for mark in item.own_markers if mark.name == 'skip']
                 if test_marker_skipif:
                     if test_marker_skipif[0].args == (True,):
                         reported_result = 'skipped'
                 if test_marker_xfail:
                     if len(test_marker_skipif) == 0 and reported_result == 'skipped':
                         reported_result = 'failed'
+                if test_marker_skip:
+                    reported_result = 'skipped'
 
                 if defectids:
                     self.add_result(
@@ -358,7 +361,7 @@ class PyTestRailPlugin(object):
         if self.publish_blocked is False:
             print('[{}] Option "Don\'t publish blocked testcases" activated'.format(TESTRAIL_PREFIX))
             blocked_tests_list = [
-                test.get('case_id') for test in self.get_tests(testrun_id)
+                test.get('case_id') for test in self.results
                 if test.get('status_id') == TESTRAIL_TEST_STATUS["blocked"]
             ]
             print('[{}] Blocked testcases excluded: {}'.format(TESTRAIL_PREFIX,
