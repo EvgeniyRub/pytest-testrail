@@ -158,3 +158,8 @@ It looks for specific markers associated with the test item: 'skipif' and 'xfail
 -- If a 'skip' marker is found the setup functions(fixtures) reported result is set to 'skipped'.<br>
 
 * Modified don't publish blocked testcases not only cases from test run, but for all cases.
+
+### What was changed so far with 2.17.0:
+
+*  Added checks for 'add_results_for_cases' endpoint. If payload size > max_size(1 Mb) - the number of test results in payload you 
+send with one POST request set to 100.    

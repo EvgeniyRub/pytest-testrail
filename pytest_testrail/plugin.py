@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import sys
 from datetime import datetime
 from operator import itemgetter
 
@@ -412,14 +413,39 @@ class PyTestRailPlugin(object):
                 entry['elapsed'] = str(duration) + 's'
             data['results'].append(entry)
 
-        response = self.client.send_post(
-            ADD_RESULTS_URL.format(testrun_id),
-            data,
-            cert_check=self.cert_check
-        )
-        error = self.client.get_error(response)
-        if error:
-            print('[{}] Info: Testcases not published for following reason: "{}"'.format(TESTRAIL_PREFIX, error))
+        max_size = 1000000
+        if sys.getsizeof(data) > max_size:
+            results = data['results']
+            split_results = []
+            temp_results = []
+
+            for i in range(0, len(results), 100):  # change 100 to the number of test results you want to add at a time
+                temp_results = results[i:i + 100]
+                if sys.getsizeof({'results': temp_results}) > max_size or i >= len(results) - 100:
+                    split_results.append({'results': temp_results})
+                    temp_results = []
+            data = split_results
+
+        if len(data) == 1:
+            response = self.client.send_post(
+                ADD_RESULTS_URL.format(testrun_id),
+                data,
+                cert_check=self.cert_check
+            )
+            error = self.client.get_error(response)
+            if error:
+                print('[{}] Info: Testcases not published for following reason: "{}"'.format(TESTRAIL_PREFIX, error))
+        else:
+            for item in data:
+                response = self.client.send_post(
+                    ADD_RESULTS_URL.format(testrun_id),
+                    item,
+                    cert_check=self.cert_check
+                )
+                error = self.client.get_error(response)
+                if error:
+                    print(
+                        '[{}] Info: Testcases not published for following reason: "{}"'.format(TESTRAIL_PREFIX, error))
 
     def create_test_run(self, assign_user_id, project_id, suite_id, include_all,
                         testrun_name, tr_keys, milestone_id, description=''):
