@@ -391,12 +391,14 @@ class PyTestRailPlugin(object):
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
                     entry['comment'] += u"# Pytest result: #\n"
                     entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
-                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ')  # noqa
+                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n',
+                                                                                                                 '\n    ')  # noqa
                 else:
                     # Indent text to avoid string formatting by TestRail. Limit size of comment.
                     entry['comment'] += u"# Pytest result: #\n"
                     entry['comment'] += u'Log truncated\n...\n' if len(str(comment)) > COMMENT_SIZE_LIMIT else u''
-                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n', '\n    ')  # noqa
+                    entry['comment'] += u"    " + converter(str(comment), "utf-8")[-COMMENT_SIZE_LIMIT:].replace('\n',
+                                                                                                                 '\n    ')  # noqa
                     # Replace symbols
                     entry['comment'] = (entry['comment']
                                         .replace('>', '\u02C3')
@@ -414,19 +416,21 @@ class PyTestRailPlugin(object):
             data['results'].append(entry)
 
         max_size = 1000000
+        n_test_results_in_data = 100  # change 100 to the number of test results you want to add at a time
         if sys.getsizeof(data) > max_size:
             results = data['results']
             split_results = []
             temp_results = []
 
-            for i in range(0, len(results), 100):  # change 100 to the number of test results you want to add at a time
-                temp_results = results[i:i + 100]
-                if sys.getsizeof({'results': temp_results}) > max_size or i >= len(results) - 100:
+            for i in range(0, len(results), n_test_results_in_data):
+                temp_results = results[i:i + n_test_results_in_data]
+                if sys.getsizeof({'results': temp_results}) > max_size or i >= len(results) - n_test_results_in_data:
                     split_results.append({'results': temp_results})
                     temp_results = []
-            data = split_results
+            data = split_results  # Prepare split_results for sending POST requests
 
         if len(data) == 1:
+            print(f"[{TESTRAIL_PREFIX}] Sending results for cases(by single POST)")
             response = self.client.send_post(
                 ADD_RESULTS_URL.format(testrun_id),
                 data,
@@ -436,7 +440,8 @@ class PyTestRailPlugin(object):
             if error:
                 print('[{}] Info: Testcases not published for following reason: "{}"'.format(TESTRAIL_PREFIX, error))
         else:
-            for item in data:
+            for index, item in enumerate(data):
+                print(f"[{TESTRAIL_PREFIX}] Sending results for cases POST {index + 1} of {len(data)}")
                 response = self.client.send_post(
                     ADD_RESULTS_URL.format(testrun_id),
                     item,
