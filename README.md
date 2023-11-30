@@ -163,3 +163,8 @@ It looks for specific markers associated with the test item: 'skipif' and 'xfail
 
 *  Added checks for 'add_results_for_cases' endpoint. If payload size > max_size(1 Mb) - the number of test results in payload you 
 send with one POST request set to 100.    
+
+
+### What was changed so far with 2.18.0:
+
+*  In checks for 'add_results_for_cases' payload size(changed to byte-like data) > max_size(0.5 Mb).

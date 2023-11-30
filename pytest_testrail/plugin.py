@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import json
 import sys
 from datetime import datetime
 from operator import itemgetter
@@ -415,9 +416,12 @@ class PyTestRailPlugin(object):
                 entry['elapsed'] = str(duration) + 's'
             data['results'].append(entry)
 
-        max_size = 1000000
+        max_size = 500000
         n_test_results_in_data = 100  # change 100 to the number of test results you want to add at a time
-        if sys.getsizeof(data) > max_size:
+        json_bytes = bytes(json.dumps(data), 'utf-8')
+        print(
+            '[{}] Info: Data to send size is {}'.format(TESTRAIL_PREFIX, sys.getsizeof(json_bytes)))
+        if sys.getsizeof(json_bytes) > max_size:
             results = data['results']
             split_results = []
             temp_results = []
