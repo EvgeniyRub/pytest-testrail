@@ -419,8 +419,8 @@ class PyTestRailPlugin(object):
         max_size = 500000
         n_test_results_in_data = 100  # change 100 to the number of test results you want to add at a time
         json_bytes = bytes(json.dumps(data), 'utf-8')
-        print(
-            '[{}] Info: Data to send size is {}'.format(TESTRAIL_PREFIX, sys.getsizeof(json_bytes)))
+        print('[{}] Info: Data to send size is {}'.format(TESTRAIL_PREFIX, sys.getsizeof(json_bytes)))
+
         if sys.getsizeof(json_bytes) > max_size:
             results = data['results']
             split_results = []
@@ -428,9 +428,20 @@ class PyTestRailPlugin(object):
 
             for i in range(0, len(results), n_test_results_in_data):
                 temp_results = results[i:i + n_test_results_in_data]
-                if sys.getsizeof({'results': temp_results}) > max_size or i >= len(results) - n_test_results_in_data:
+                while sys.getsizeof({'results': temp_results}) > max_size:
+                    # Split temp_results into smaller chunks if size temp_results > max_size
+                    temp_results = [temp_results[j:j + n_test_results_in_data // 2]
+                                    for j in range(0, len(temp_results), n_test_results_in_data // 2)]
+                if i >= len(results) - n_test_results_in_data:
+                    # Append results in the last iteration
                     split_results.append({'results': temp_results})
-                    temp_results = []
+                    break
+                elif sys.getsizeof({'results': temp_results}) < max_size:
+                    # Add temp_results into a dictionary if it fits maximum size
+                    split_results.append({'results': temp_results})
+                else:
+                    # Continue to split temp_results into smaller chunks if it still exceeds the maximum size
+                    continue
             data = split_results  # Prepare split_results for sending POST requests
 
         if len(data) == 1:

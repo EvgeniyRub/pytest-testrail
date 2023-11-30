@@ -168,3 +168,7 @@ send with one POST request set to 100.
 ### What was changed so far with 2.18.0:
 
 *  In checks for 'add_results_for_cases' payload size(changed to byte-like data) > max_size(0.5 Mb).
+
+### What was changed so far with 2.19.0:
+
+*  Changed logic of splitting payload if size > max_size(0.5 Mb).
