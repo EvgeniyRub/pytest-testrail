@@ -232,7 +232,7 @@ class PyTestRailPlugin(object):
             testcaseids = item.get_closest_marker(TESTRAIL_PREFIX).kwargs.get('ids')
             reported_result = outcome.get_result().outcome
             if rep.when == 'call':
-                test_marker_names = [mark.name for mark in item.own_markers if mark.name == 'xfail']
+                test_marker_names = [mark.name for mark in item.own_markers if mark.name == 'xfail' and all(mark.args)]
                 if test_marker_names:
                     if reported_result == 'skipped' and test_marker_names[0] == 'xfail':
                         reported_result = 'xfail'

@@ -172,3 +172,7 @@ send with one POST request set to 100.
 ### What was changed so far with 2.19.0:
 
 *  Changed logic of splitting payload if size > max_size(0.5 Mb).
+
+### What was changed so far with 2.20.0:
+
+*  Refines the condition for fetching 'xfail' markers, verifying that all arguments are True. The updated version includes syntax corrections, particularly to ensure the correct reporting of 'xfail' and 'xpass' test results.
